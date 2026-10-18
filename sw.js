@@ -1,4 +1,4 @@
-const CACHE = "caderneta-v5";
+const CACHE = "caderneta-v6";
 const SHELL = ["./", "index.html", "style.css", "app.js", "manifest.webmanifest", "icons/icon-180.png", "icons/icon-192.png"];
 
 self.addEventListener("install", (e) => {
