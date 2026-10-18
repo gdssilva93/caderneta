@@ -501,7 +501,7 @@ async function boot() {
   render();
 }
 
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).catch(() => {});
 if (navigator.storage?.persist) navigator.storage.persist().catch(() => {});
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") boot(); });
 boot();
