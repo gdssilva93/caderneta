@@ -316,7 +316,9 @@ function rowHtml(i) {
   const m = META[i.key];
   let sub = m.sub, right2 = "";
   if (["vuaa", "btc", "ada"].includes(i.key)) {
-    sub = `${num(i.units, i.key === "btc" ? 7 : 4)} un. · ${i.price != null ? eur(i.price, i.key === "ada" ? 4 : 2) : "sem cotação"}`;
+    const d = i.key === "ada" ? 4 : 2;
+    sub = `${num(i.units, i.key === "btc" ? 7 : 4)} un. · ${i.price != null ? eur(i.price, d) : "sem cotação"}`;
+    if (i.units > 0) sub += `<br>Preço médio ${eur(i.cost / i.units, d)}`;
   }
   if (i.cost != null && i.key !== "fundo" && i.value != null) {
     const pl = i.value - i.cost;
@@ -366,10 +368,16 @@ function editPosition(key) {
   const P = state.positions;
   if (["vuaa", "btc", "ada"].includes(key)) {
     const p = P[key];
-    openSheet(`<form><h3>${META[key].name}</h3><p class="muted small">Confirma as unidades na app da corretora.</p>
-      ${f("Unidades", "units", p.units)}${f("Total investido (com comissões), €", "cost", p.cost)}
+    const pm = p.units > 0 ? +(p.cost / p.units).toFixed(key === "vuaa" ? 4 : 2) : "";
+    openSheet(`<form><h3>${META[key].name}</h3><p class="muted small">Copia as unidades e o preço médio da app da corretora. O total investido é calculado a partir deles.</p>
+      ${f("Unidades", "units", p.units)}${f("Preço médio de compra (com comissões), €", "pm", pm)}
+      <p class="muted small">Total investido atual: <span class="num">${eur(p.cost)}</span></p>
       <button class="btn">Guardar</button><button type="button" class="btn ghost" data-close>Cancelar</button></form>`,
-      (fd) => { p.units = n(fd, "units") ?? p.units; p.cost = n(fd, "cost") ?? p.cost; commit("Guardado"); });
+      (fd) => {
+        const u = n(fd, "units") ?? p.units, m = n(fd, "pm");
+        p.units = u; if (m != null) p.cost = u * m;
+        commit("Guardado");
+      });
   } else if (key === "cs2") {
     const p = P.cs2;
     openSheet(`<form><h3>Inventário CS2</h3>${f("Valor atual, €", "value", p.value)}${f("Total investido, €", "cost", p.cost)}
