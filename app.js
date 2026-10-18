@@ -394,7 +394,7 @@ function editPosition(key) {
         commit("Série F sincronizada");
       });
   } else if (key === "casa") {
-    const C = P.casa || { value: "", debt: "", share: 1, tan: 3, payment: 711.4 };
+    const C = P.casa || { value: "", debt: "", share: 1, tan: "", payment: "" };
     openSheet(`<form><h3>Casa</h3><p class="muted small">A dívida desce sozinha no fim de cada mês com a prestação.</p>
       ${f("Valor de mercado estimado, €", "value", C.value)}
       ${f("Capital em dívida hoje (total do crédito), €", "debt", C.debt ? +C.debt.toFixed(2) : "")}
@@ -405,7 +405,7 @@ function editPosition(key) {
       (fd) => {
         const v = n(fd, "value"), d = n(fd, "debt");
         if (v == null || d == null) return toast("Preenche o valor e a dívida");
-        P.casa = { value: v, debt: d, debtAsOf: iso(new Date()), share: (n(fd, "share") ?? 100) / 100, tan: n(fd, "tan") ?? 3, payment: n(fd, "payment") ?? 711.4 };
+        P.casa = { value: v, debt: d, debtAsOf: iso(new Date()), share: (n(fd, "share") ?? 100) / 100, tan: n(fd, "tan") ?? 0, payment: n(fd, "payment") ?? 0 };
         commit("Casa guardada");
       });
   }
