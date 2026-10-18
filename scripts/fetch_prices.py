@@ -58,6 +58,20 @@ def main():
                 a.update(price=p, currency="EUR", time=dt.datetime.utcnow().isoformat() + "Z")
             except Exception as e:
                 errors.append(f"coingecko {cid}: {e}")
+    # Ouro: GC=F (USD/onça) convertido para EUR/grama com EURUSD=X
+    try:
+        g, fx = yahoo("GC=F"), yahoo("EURUSD=X")
+        OZ = 31.1034768
+        fxh = fx["history"]
+        hist = {}
+        for day, usd in g["history"].items():
+            prev = [d for d in fxh if d <= day]
+            if prev:
+                hist[day] = round(usd / fxh[max(prev)] / OZ, 4)
+        out["assets"]["ouro"] = {"price": round(g["price"] / fx["price"] / OZ, 4), "currency": "EUR",
+                                 "time": g["time"], "history": hist, "unit": "g"}
+    except Exception as e:
+        errors.append(f"ouro: {e}")
     out["updated"] = dt.datetime.utcnow().isoformat() + "Z"
     out["errors"] = errors
     with open("prices.json", "w") as f:

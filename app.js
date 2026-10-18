@@ -181,10 +181,12 @@ function processRules(s, today = new Date()) {
 }
 
 /* ---------- Cálculos ---------- */
+const MARKET = ["vuaa", "btc", "ada", "ouro"];
 const META = {
   vuaa: { name: "VUAA", sub: "Vanguard S&P 500 · IBKR", mono: "V", color: "var(--c-vuaa)" },
   btc: { name: "Bitcoin", sub: "Trade Republic", mono: "₿", color: "var(--c-btc)" },
   ada: { name: "Cardano", sub: "Longo prazo", mono: "₳", color: "var(--c-ada)" },
+  ouro: { name: "Ouro", sub: "Físico", mono: "Au", color: "var(--c-ouro)" },
   cs2: { name: "Inventário CS2", sub: "Valor manual", mono: "✛", color: "var(--c-cs2)" },
   fundo: { name: "Fundo de emergência", sub: "Certificados Série F", mono: "★", color: "var(--c-serief)" },
   casa: { name: "Casa", sub: "Capital próprio", mono: "⌂", color: "var(--c-casa)" },
@@ -192,7 +194,7 @@ const META = {
 
 function compute(s) {
   const P = s.positions, items = [];
-  for (const k of ["vuaa", "btc", "ada"]) {
+  for (const k of MARKET) {
     const p = P[k]; if (!p) continue;
     const px = priceOf(k);
     const value = px != null ? p.units * px : null;
@@ -208,7 +210,7 @@ function compute(s) {
     fundo = F.total - reserved;
     items.push({ key: "fundo", value: fundo, cost: F.fundoBase, juros: fundo - F.fundoBase });
   }
-  const market = items.filter((i) => ["vuaa", "btc", "ada", "cs2"].includes(i.key));
+  const market = items.filter((i) => [...MARKET, "cs2"].includes(i.key));
   const mValue = market.reduce((a, i) => a + (i.value ?? 0), 0);
   const mCost = market.reduce((a, i) => a + i.cost, 0);
   const liquido = items.reduce((a, i) => a + (i.value ?? 0), 0);
@@ -315,9 +317,10 @@ function render() {
 function rowHtml(i) {
   const m = META[i.key];
   let sub = m.sub, right2 = "";
-  if (["vuaa", "btc", "ada"].includes(i.key)) {
+  if (MARKET.includes(i.key)) {
     const d = i.key === "ada" ? 4 : 2;
-    sub = `${num(i.units, i.key === "btc" ? 7 : 4)} un. · ${i.price != null ? eur(i.price, d) : "sem cotação"}`;
+    const un = i.key === "ouro" ? "g" : "un.";
+    sub = `${num(i.units, i.key === "btc" ? 7 : 4)} ${un} · ${i.price != null ? eur(i.price, d) + (i.key === "ouro" ? "/g" : "") : "sem cotação"}`;
     if (i.units > 0) sub += `<br>Preço médio ${eur(i.cost / i.units, d)}`;
   }
   if (i.cost != null && i.key !== "fundo" && i.value != null) {
@@ -366,11 +369,11 @@ const n = (fd, k) => { const v = String(fd.get(k) ?? "").replace(",", "."); retu
 
 function editPosition(key) {
   const P = state.positions;
-  if (["vuaa", "btc", "ada"].includes(key)) {
+  if (MARKET.includes(key)) {
     const p = P[key];
     const pm = p.units > 0 ? +(p.cost / p.units).toFixed(key === "vuaa" ? 4 : 2) : "";
     openSheet(`<form><h3>${META[key].name}</h3><p class="muted small">Copia as unidades e o preço médio da app da corretora. O total investido é calculado a partir deles.</p>
-      ${f("Unidades", "units", p.units)}${f("Preço médio de compra (com comissões), €", "pm", pm)}
+      ${f(key === "ouro" ? "Gramas (ouro fino)" : "Unidades", "units", p.units)}${f("Preço médio de compra (com comissões), €", "pm", pm)}
       <p class="muted small">Total investido atual: <span class="num">${eur(p.cost)}</span></p>
       <button class="btn">Guardar</button><button type="button" class="btn ghost" data-close>Cancelar</button></form>`,
       (fd) => {
@@ -493,7 +496,7 @@ async function boot() {
   render();
   await refreshPrices();
   if (state) {
-    for (const k of ["vuaa", "btc", "ada"]) { const px = priceOf(k); if (px && state.positions[k]) state.positions[k].lastPrice = px; }
+    for (const k of MARKET) { const px = priceOf(k); if (px && state.positions[k]) state.positions[k].lastPrice = px; }
     const applied = processRules(state);
     save(state);
     if (applied.length) toast("Lançado: " + [...new Set(applied)].join(", "));
